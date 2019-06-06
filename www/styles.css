@@ -1,0 +1,12 @@
+body {
+    font-family: sans-serif;
+}
+
+article#json {
+    font-family: monospace;
+    white-space: pre;
+}
+
+.error {
+    background-color: #f35689;
+}
