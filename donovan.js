@@ -1,5 +1,12 @@
+/*
+
+  A JSON parser that retains the symbol location information.
+
+  If you put a schema on top or something this will be able to tell
+  you the line number of a schema error.
+
+ */
 const clarinet = require("clarinet");
-const assert = require("assert");
 
 function o() {
     const values = [];
@@ -21,12 +28,12 @@ function o() {
             return [keys, values];
         },
 
-        literal() {
+        js() {
             const o = {};
             for (let i = 0; i < keys.length; i++) {
                 const key = keys[i].key;
                 const value = values[i];
-                o[key] = value.value.literal();
+                o[key] = value.value.js();
             }
             return o;
         }
@@ -44,8 +51,8 @@ function a(line, col, pos) {
             });
         },
 
-        literal() {
-            const res = values.map(v => v.value.literal());
+        js() {
+            const res = values.map(v => v.value.js());
             return res;
         }
     };
@@ -54,7 +61,7 @@ function a(line, col, pos) {
 function v(value, line, col, pos) {
     return {
         value, line, col, pos,
-        literal() {
+        js() {
             return value;
         }
     };
@@ -93,6 +100,10 @@ async function parseJson(text) {
         parser.onopenobject = function (key) {
             const {line, column, position} = parser;
             const obj = o();
+            const last = stack[stack.length - 1];
+            if (last !== undefined) {
+                last.addValue(obj, line, column, position);
+            }
             stack.push(obj);
             obj.addKey(key, line, column, position);
             // console.log("open {");
@@ -139,66 +150,6 @@ async function parseJson(text) {
     return result;
 }
 
-// Some tests
-async function tests() {
-    const data1 = {
-        "title": ["blah dee blah"],
-        "description": "ho hum",
-        "llst": [
-            "one",
-            "two"
-        ],
-        "anotherkey": "10"
-    };
-    const text1 = JSON.stringify(data1);
-    const result1 = await parseJson(text1);
-    assert.deepStrictEqual(data1, result1.literal());
-
-    const text2 = `{
-        "title" ["blah dee blah"],
-        "description": "ho hum",
-        "llst": [
-            "one",
-            "two"
-        ],
-        "anotherkey": "10"
-    }`;
-    const result2 = await parseJson(text2)
-          .catch(e => { return {error:e} });
-
-    // console.log(result2.error.message);
-    
-    assert(result2.error.message.startsWith("at line 2"));
-
-    const text3 = `{
-        "title": ["blah dee blah"],
-        "description": "ho hum"
-        "llst": [
-            "one",
-            "two"
-        ],
-        "anotherkey": "10"
-    }`;
-    const result3 = await parseJson(text3)
-          .catch(e => { return {error:e} });
-    assert(result3.error.message.startsWith("at line 4")); // the trailing comma
-
-    /*
-    const text4 = `[
-            "one",
-            "two",
-            { "object": "value" }
-        ]`;
-    const result4 = await parseJson(text4)
-          .catch(e => { return {error:e} });
-    console.log(result4.literal());
-*/
-}
-
-tests()
-    .catch(e => {
-        console.log("tests failed with exception>", e);
-        process.exit(1);
-    });
+module.exports = parseJson;
 
 // End
