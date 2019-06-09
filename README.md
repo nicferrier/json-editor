@@ -2,7 +2,7 @@
 
 This is an ES6 module for editing a JSON file.
 
-![image of the editor]{json-editor-image.png}
+![image of the editor](json-editor-image.png)
 
 It performs validation based on JSON syntax but also can be extended
 with further checking.
