@@ -1,8 +1,10 @@
-const assert = require("assert");
-const parseJson = require("./donovan.js");
+import {ok, deepStrictEqual} from "assert";
+import parseJson from "./www/donovan.mjs";
+// const parseJson = require("./donovan.js");
 
 // Some tests
 async function tests() {
+    /*
     const data1 = {
         "title": ["blah dee blah"],
         "description": "ho hum",
@@ -14,7 +16,8 @@ async function tests() {
     };
     const text1 = JSON.stringify(data1);
     const result1 = await parseJson(text1);
-    assert.deepStrictEqual(data1, result1.js());
+    // console.log(result1);
+    deepStrictEqual(data1, result1.js());
 
     const text2 = `{
         "title" ["blah dee blah"],
@@ -30,7 +33,7 @@ async function tests() {
 
     // console.log(result2.error.message);
     
-    assert(result2.error.message.startsWith("at line 2"));
+    ok(result2.error.message.startsWith("at line 2"));
 
     const text3 = `{
         "title": ["blah dee blah"],
@@ -43,7 +46,7 @@ async function tests() {
     }`;
     const result3 = await parseJson(text3)
           .catch(e => { return {error:e} });
-    assert(result3.error.message.startsWith("at line 4")); // the trailing comma
+    ok(result3.error.message.startsWith("at line 4")); // the trailing comma
 
     const data4 = [
         "one",
@@ -53,7 +56,15 @@ async function tests() {
     const text4 = JSON.stringify(data4);
     const result4 = await parseJson(text4)
           .catch(e => { return {error:e} });
-    assert.deepStrictEqual(result4.js(), data4);
+    deepStrictEqual(result4.js(), data4);
+    */
+    
+    const text5 = `{  "title": "blah dee blah",  "description": "ho hum"  "llst": [    "one",    "two"  ]}`;
+    const result5 = await parseJson(text5)
+          .catch(e => { return {error:e} });
+
+    console.log("result", result5);
+    
 }
 
 tests()

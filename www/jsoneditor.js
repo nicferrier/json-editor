@@ -19,7 +19,20 @@
       see errors you have to provide that style.
  */
 
-export default function jsoneditor(jsonDoc, editorHTMLElement, options = {}) {
+// these imports rely on special middleware in cl.js to make them work
+import * as donovanModule from "/www/donovan.ejs";
+import * as clarinetModule from "/www/clarinet.ejs";
+
+const parseJson = donovanModule.default.exports(clarinetModule.default);
+
+const JSONparse = async function (data) {
+    const result = await parseJson(data);
+    if (result.error !== undefined) {
+        throw result.error;
+    }
+};
+
+function jsoneditor(jsonDoc, editorHTMLElement, options = {}) {
     const {
         cssErrorClass = "json-editor-syntax-error",
         check = function (object) {
@@ -30,7 +43,7 @@ export default function jsoneditor(jsonDoc, editorHTMLElement, options = {}) {
         "style", "font-family: monospace; white-space: pre;"
     );
 
-    const regex = new RegExp("(.*) at line ([0-9]+) column ([0-9]+) of the JSON data$");
+    const regex = new RegExp("(.*)at line ([0-9]+) column ([0-9]+) of the JSON data$");
 
     const text = JSON.stringify(jsonDoc, null, 2);
     const textArray = text.split("\n");
@@ -38,16 +51,18 @@ export default function jsoneditor(jsonDoc, editorHTMLElement, options = {}) {
         editorHTMLElement.appendChild(document.createElement("div")).textContent = line;
     });
     editorHTMLElement.setAttribute("contenteditable", "true");
-    editorHTMLElement.addEventListener("input", inputEvt => {
+    editorHTMLElement.addEventListener("input", async inputEvt => {
         try {
             Array.from(document.querySelectorAll("#json ." + cssErrorClass))
                 .forEach(e => e.classList.remove(cssErrorClass));
             const txt = editorHTMLElement.textContent;
-            const updated = JSON.parse(txt);
+            console.log(txt);
+            const updated = await JSONparse(txt);
             check(updated);
             const event = new CustomEvent("success", {json: updated});
         }
         catch (e) {
+            console.log(e.message);
             const [_, preamble, line, column] = regex.exec(e.message);
             const lineElements = Array.from(editorHTMLElement.children);
             const txt = lineElements.reduce((a,c) => a + "\n" + c.textContent, "").slice(1);
@@ -56,6 +71,7 @@ export default function jsoneditor(jsonDoc, editorHTMLElement, options = {}) {
             let i = 0;
             for (i = 0; i<lines.length; i++) {
                 count = count + lines[i].length;
+                console.log({i, lines, count, line, column});
                 if (count > column) {
                     break;
                 }
@@ -65,5 +81,7 @@ export default function jsoneditor(jsonDoc, editorHTMLElement, options = {}) {
     });
     return editorHTMLElement;
 }
+
+export default jsoneditor;
 
 // End

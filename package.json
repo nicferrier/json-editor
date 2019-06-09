@@ -14,7 +14,10 @@
     "express": "^4.17.1"
   },
   "devDependencies": {
+    "acorn": "^6.1.1",
     "ajv-cli": "^3.0.0",
-    "clarinet": "^0.12.3"
+    "browserify": "^16.2.3",
+    "clarinet": "^0.12.3",
+    "escodegen": "^1.11.1"
   }
 }
