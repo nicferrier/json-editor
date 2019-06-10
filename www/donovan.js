@@ -1,9 +1,9 @@
 /*
 
-  A JSON parser that retains the symbol location information.
+    A JSON parser that retains the symbol location information.
 
-  If you put a schema on top or something this will be able to tell
-  you the line number of a schema error.
+    If you put a schema on top or something this will be able to tell
+    you the line number of a schema error.
 
 */
 function donovan (clarinet) {
@@ -30,9 +30,16 @@ function donovan (clarinet) {
             js() {
                 const o = {};
                 for (let i = 0; i < keys.length; i++) {
-                    const key = keys[i].key;
+                    const key = new String(keys[i].key);
+
+                    key.sourceLineNumber = keys[i].line;
+                    key.sourceColNumber = keys[i].col;
+
                     const value = values[i];
-                    o[key] = value.value.js();
+                    const jsValue = value.value.js();
+                    jsValue.sourceLineNumber = values[i].line;
+                    jsValue.sourceColNumber = values[i].col;
+                    o[key] = jsValue;
                 }
                 return o;
             }
@@ -61,7 +68,7 @@ function donovan (clarinet) {
         return {
             value, line, col, pos,
             js() {
-                return value;
+                return new String(value);
             }
         };
     }
@@ -71,21 +78,23 @@ function donovan (clarinet) {
             const parser = clarinet.parser();
             const stack = [];
             const deepStack = [];
-
+            
             parser.onerror = function (e) {
                 const {line, column, position} = parser;
-                console.log(
-                    "whoops!", e, text,
+                /*
+                  console.log(
+                  "whoops!", e, text,
                     line, column, position,
                     stack.map(v => v.js())
-                );
+                    );
+                */
                 const err = new SyntaxError(
                     `at line ${line} column ${column} of the JSON data`
                 );
                 parser.error = err;
                 parser.close();  // rejects from the close handler
             };
-
+            
             parser.onvalue = function (value) {
                 const {line, column, position} = parser;
                 const last = stack[stack.length - 1];

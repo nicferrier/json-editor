@@ -405,9 +405,9 @@
       if (c === Char.lineFeed) {
         parser.line ++;
         parser.column = 0;
-        console.log("new line", parser.line);
+        // console.log("new line", parser.line);
       } else {
-        console.log("i", i, "p.column", parser.column, chunk.substring(i));
+        // console.log("i", i, "p.column", parser.column, chunk.substring(i));
         parser.column ++;
       }
       switch (parser.state) {
@@ -458,7 +458,7 @@
             closeValue(parser);
             parser.state  = S.OPEN_KEY;
           } else {
-            console.log("clarinet", parser.line, parser.column, parser.position, chunk, i);
+            // console.log("clarinet", parser.line, parser.column, parser.position, chunk, i);
             error(parser, 'Bad object');
           }
         continue;
@@ -540,10 +540,10 @@
             if (c === Char.doubleQuote && !slashed) {
               parser.state = parser.stack.pop() || S.VALUE;
               parser.textNode += chunk.substring(starti, i-1);
-              console.log("start parser pos", parser.position);
+              // console.log("start parser pos", parser.position);
               parser.position += i - 1 - starti;
               parser.column += i - 1 - starti;
-              console.log("end parser pos", parser.position);
+              // console.log("end parser pos", parser.position);
               break;
             }
             if (c === Char.backslash && !slashed) {

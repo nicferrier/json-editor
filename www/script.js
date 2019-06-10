@@ -19,7 +19,8 @@ window.addEventListener("load", loadEvt => {
                     "type": "string"
                 }
             }
-        }
+        },
+        "additionalProperties": false
     };
 
     var ajv = new Ajv(); // options can be passed, e.g. {allErrors: true}
@@ -34,16 +35,49 @@ window.addEventListener("load", loadEvt => {
         ]
     };
 
+    class SchemaValidationError extends Error {
+        constructor(message) {
+            super(message);
+        }
+    }
+
     jsoneditor(jsonDoc, document.querySelector("#json"), {
         cssErrorClass: "error",
         check: function (object) {
-            const valid = validate(object);
-            console.log("check called:", valid);
+            const typedObject = JSON.parse(JSON.stringify(object));
+            const valid = validate(typedObject);
             if (!valid) {
-                console.log(
-                    "schema errors",
-                    ajv.errorsText(validate.errors, {allErrors: true })
-                );
+                console.log("script> ajv errors:", validate.errors, object);
+                const errorList = validate.errors.map(({
+                    keyword, message, dataPath, params
+                }) => {
+                    if (keyword === "type") {
+                        const objPath = dataPath.split(".").slice(1);
+                        const lookupResult = objPath.reduce((a,c) => {
+                            return a[c];
+                        }, object);
+                        return {
+                            line: lookupResult.sourceLineNumber,
+                            col: lookupResult.sourceColNumber,
+                            message
+                        };
+                    }
+                    else if (keyword === "additionalProperties") {
+                        const additionalPath = params.additionalProperty;
+                        const objPath = additionalPath.split(".").slice(1);
+                        const lookupResult = objPath.reduce((a,c) => {
+                            return a[c];
+                        }, object);
+                        return {
+                            line: lookupResult.sourceLineNumber,
+                            col: lookupResult.sourceColNumber,
+                            message
+                        };
+                    }
+                });
+                const err = new SchemaValidationError("validation error");
+                err.validationErrors = errorList;
+                throw err;
             }
         }
     });
