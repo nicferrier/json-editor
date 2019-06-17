@@ -1,0 +1,4 @@
+# these two are here so I don't forget to deal with them with a middleware or something
+# because they should come out of node_modules/@nicferrier/json-parser
+www/jsonparser.mjs
+www/parser.mjs

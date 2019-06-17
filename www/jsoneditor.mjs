@@ -19,24 +19,7 @@
         see errors you have to provide that style.
  */
 
-// these imports rely on special middleware in cl.js to make them work
-import * as donovanModule from "/www/donovan.ejs";
-import * as clarinetModule from "/www/clarinet.ejs";
-
-const parseJson = donovanModule.default.exports(clarinetModule.default);
-
-/*
-  This does NOT produce a simple object, more it is the meta object.
-
-  Call .js() on it to get the actual object.
- */
-const JSONparse = async function (data) {
-    const result = await parseJson(data);
-    if (result.error !== undefined) {
-        throw result.error;
-    }
-    return result.js();
-};
+import jsonparser from "./jsonparser.mjs";
 
 function jsoneditor(jsonDoc, editorHTMLElement, options = {}) {
     const {
@@ -64,8 +47,14 @@ function jsoneditor(jsonDoc, editorHTMLElement, options = {}) {
         try {
             Array.from(document.querySelectorAll("#json ." + cssErrorClass))
                 .forEach(e => e.classList.remove(cssErrorClass));
-            const txt = editorHTMLElement.textContent;
-            const updated = await JSONparse(txt);
+            const txt = Array.from(editorHTMLElement.children)
+                  .map(e => e.textContent)
+                  .join("\n");
+            console.log("jsoneditor: the txt is >", txt);
+            const jsonDoc = jsonparser(txt);
+            console.log("jsoneditor: the doc is >", JSON.stringify(jsonDoc, null, 2));
+            const updated = jsonDoc.valueOf();
+            console.log("jsoneditor: the updated is >", JSON.stringify(updated, null, 2));
             if (check(updated)) {
                 const event = new CustomEvent("json-valid", {json: updated});
                 editorHTMLElement.dispatchEvent(event);
@@ -74,7 +63,7 @@ function jsoneditor(jsonDoc, editorHTMLElement, options = {}) {
         catch (e) {
             try {
                 if (e instanceof SyntaxError) {
-                    const [_, preamble, line, column] = regex.exec(e.message);
+                    const {message, line, column} = e;
                     const lineElements = Array.from(editorHTMLElement.children);
                     const txt = lineElements.reduce((a,c) => a + "\n" + c.textContent, "").slice(1);
                     const lines = txt.split("\n");
@@ -82,7 +71,7 @@ function jsoneditor(jsonDoc, editorHTMLElement, options = {}) {
                     let i = 0;
                     for (i = 0; i<lines.length; i++) {
                         count = count + lines[i].length;
-                        // console.log({i, lines, count, line, column});
+                        console.log({i, lines, count, line, column});
                         if (count > column) {
                             break;
                         }
@@ -91,24 +80,7 @@ function jsoneditor(jsonDoc, editorHTMLElement, options = {}) {
                 }
                 else {
                     if (e.validationErrors !== undefined) {
-                        const lineElements = Array.from(editorHTMLElement.children);
-                        const txt = lineElements.reduce((a,c) => a + "\n" + c.textContent, "").slice(1);
-                        const lines = txt.split("\n");
-                        e.validationErrors.forEach(({line, col, message}) => {
-                            let count = 0;
-                            let i = 0;
-                            for (i = 0; i<lines.length; i++) {
-                                count = count + lines[i].length;
-                                // console.log({i, lines, count, line, column});
-                                if (count > col) {
-                                    break;
-                                }
-                            }
-                            const errorLine = lineElements[i];
-                            if (errorLine !== undefined) {
-                                errorLine.classList.add(cssErrorClass);
-                            }
-                        });
+                        console.log("jsoneditor: validation errors!");
                     }
                 }
             }

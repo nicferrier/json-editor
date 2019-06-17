@@ -4,17 +4,16 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepare": "bash -c 'cp node_modules/@nicferrier/json-parser/{jsonparser,parser}.mjs www'"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@nicferrier/json-parser": "^0.6.0",
     "ajv": "^6.10.0",
-    "express": "^4.17.1",
-    "acorn": "^6.1.1",
-    "clarinet": "^0.12.3",
-    "escodegen": "^1.11.1"
+    "express": "^4.17.1"
   },
   "devDependencies": {}
 }
