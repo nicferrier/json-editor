@@ -8,25 +8,22 @@ It performs validation based on JSON syntax but also can be extended
 with further checking.
 
 
-## ES6
+## Build
 
-These days it's important that we make things available via ES6
-modules.
+This uses my recently created [loss-less JSON parser](https://github.com/nicferrier/nics-json-parser) 
+via NPM.
 
-This is still really hard with the mostly node based infrastructure we
-have. So I've written a translation layer that can be employed to try
-and adapt node like code into ES6 modules.
+The parser modules are left in node_modules, which is frustrating.
 
-This is provided by an express middleware called `es6Middleware`.
+Eventually I'll make express middleware to make that easier, but for
+now I simply copy the relevant files to where I want them with a
+prepare script.
 
-What this does is allow a sort of template file to be written which
-provides a translation of a module via parsing.
+To repeat this step, do this:
 
+```
+$ npm run-script prepare
+```
 
-## Distributing ES6 modules
+The relevant scripts are gitignored so they won't cause any problems.
 
-This is frustrating too. I don't know how to distribute this module
-either except that I would prefer to use npm.
-
-For now either use direct handlers to provide things out of
-node_modules or provide another translation layer.
