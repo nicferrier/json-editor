@@ -56,12 +56,8 @@ const checkErrors = function (jsonDoc, editorHTMLElement, errorPanel, options = 
         try {
             if (e instanceof SyntaxError) {
                 const {message, line, column, validationMessage } = e;
-                console.log("line", line, validationMessage);
-
                 const lineElements = Array.from(editorHTMLElement.children);
-                
                 if (line !== undefined) {
-                    console.log("line", line, cssErrorClass);
                     lineElements[line].classList.add(cssErrorClass);
                 }
 
@@ -69,9 +65,7 @@ const checkErrors = function (jsonDoc, editorHTMLElement, errorPanel, options = 
                     if (line !== undefined) {
                         lineElements[line].setAttribute("title", e.validationMessage);
                     }
-
-                    errorPanel.textContent = e.validationMessage;
-                    console.log("error panel!", errorPanel.textContent);
+                    errorPanel.textContent = "schema validation: " + e.validationMessage;
                 }
             }
         }
