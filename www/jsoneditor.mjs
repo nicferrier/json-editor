@@ -56,11 +56,22 @@ const checkErrors = function (jsonDoc, editorHTMLElement, errorPanel, options = 
         try {
             if (e instanceof SyntaxError) {
                 const {message, line, column, validationMessage } = e;
+                console.log("line", line, validationMessage);
+
                 const lineElements = Array.from(editorHTMLElement.children);
-                lineElements[line].classList.add(cssErrorClass);
-                if (e.validationMessage !== undefined) {
-                    lineElements[line].setAttribute("title", e.validationMessage);
+                
+                if (line !== undefined) {
+                    console.log("line", line, cssErrorClass);
+                    lineElements[line].classList.add(cssErrorClass);
+                }
+
+                if (validationMessage !== undefined) {
+                    if (line !== undefined) {
+                        lineElements[line].setAttribute("title", e.validationMessage);
+                    }
+
                     errorPanel.textContent = e.validationMessage;
+                    console.log("error panel!", errorPanel.textContent);
                 }
             }
         }
@@ -94,8 +105,13 @@ function jsoneditor(jsonDoc, editorHTMLElement, options = {}) {
 #json .jsoneditor__errorPanel {
   font-family: monospace; 
   background-color: black;
-  padding: 10px;
-  color: #ff2020;
+  padding: 5px;
+  height: 30px;
+  font-size:18px;
+  color: #f35689;
+}
+#json .error {
+    background-color: #f35689;
 }
 `;
     setTimeout(_ => editorDiv.focus(), 0); // 0 is fine, has to be in the next event loop

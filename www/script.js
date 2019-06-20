@@ -77,6 +77,9 @@ window.addEventListener("load", loadEvt => {
                     }
                     err.line = doc.line;
                     err.column = doc.column;
+                    err.validationMessage = firstError.schemaPath + " " + firstError.message;
+                }
+                else if (firstError.keyword === "required") {
                     err.validationMessage = firstError.message;
                 }
                 validate.errors = [];
