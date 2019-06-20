@@ -11,9 +11,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@nicferrier/json-parser": "^0.6.0",
+    "@nicferrier/json-parser": "^0.8.0",
     "ajv": "^6.10.0",
-    "express": "^4.17.1"
+    "express": "^4.17.1",
+    "is-my-json-valid": "^2.20.0"
   },
   "devDependencies": {}
 }

@@ -21,6 +21,55 @@
 
 import jsonparser from "./jsonparser.mjs";
 
+const debug = false;
+
+const checkErrors = function (jsonDoc, editorHTMLElement, errorPanel, options = {}) {
+    const {
+        cssErrorClass = "json-editor-syntax-error",
+        check = function (object) {
+            return true;
+        }
+    } = options;
+
+    try {
+        Array.from(document.querySelectorAll("#json ." + cssErrorClass))
+            .forEach(e => e.classList.remove(cssErrorClass));
+        errorPanel.textContent = "";
+
+        const txt = Array.from(editorHTMLElement.children)
+              .map(e => e.textContent)
+              .join("\n");
+        if (debug) console.log("jsoneditor: the txt is >", txt);
+        
+        const jsonDoc = jsonparser(txt);
+        if (debug) console.log("jsoneditor: the doc is >", JSON.stringify(jsonDoc, null, 2));
+
+        const updated = jsonDoc.valueOf();
+        if (debug) console.log("jsoneditor: the updated is >", JSON.stringify(updated, null, 2));
+
+        if (check(jsonDoc)) {
+            const event = new CustomEvent("json-valid", {json: updated});
+            editorHTMLElement.dispatchEvent(event);
+        }
+    }
+    catch (e) {
+        try {
+            if (e instanceof SyntaxError) {
+                const {message, line, column, validationMessage } = e;
+                const lineElements = Array.from(editorHTMLElement.children);
+                lineElements[line].classList.add(cssErrorClass);
+                if (e.validationMessage !== undefined) {
+                    lineElements[line].setAttribute("title", e.validationMessage);
+                    errorPanel.textContent = e.validationMessage;
+                }
+            }
+        }
+        catch (err) {
+            console.log("error in error handling", err);
+        }
+    }
+};
+
 function jsoneditor(jsonDoc, editorHTMLElement, options = {}) {
     const {
         cssErrorClass = "json-editor-syntax-error",
@@ -29,66 +78,42 @@ function jsoneditor(jsonDoc, editorHTMLElement, options = {}) {
         }
     } = options;
 
+    const editorDiv = editorHTMLElement.appendChild(document.createElement("div"));
+    editorDiv.classList.add("jsoneditor__textPanel");
+    const editorErrorPanel = editorHTMLElement.appendChild(document.createElement("div"));
+    editorErrorPanel.classList.add("jsoneditor__errorPanel");
+
     editorHTMLElement.setAttribute(
-        "style", "font-family: monospace; white-space: pre;"
+        "style", ";"
     );
-    setTimeout(_ => editorHTMLElement.focus(), 0); // 0 is fine, has to be in the next event loop
+    document.body.appendChild(document.createElement("style")).textContent = `
+#json .jsoneditor__textPanel {
+  font-family: monospace; 
+  white-space: pre;
+}
+#json .jsoneditor__errorPanel {
+  font-family: monospace; 
+  background-color: black;
+  padding: 10px;
+  color: #ff2020;
+}
+`;
+    setTimeout(_ => editorDiv.focus(), 0); // 0 is fine, has to be in the next event loop
 
     const regex = new RegExp("(.*)at line ([0-9]+) column ([0-9]+) of the JSON data$");
     const text = JSON.stringify(jsonDoc, null, 2);
     const textArray = text.split("\n");
 
     textArray.forEach(line => {
-        editorHTMLElement.appendChild(document.createElement("div")).textContent = line;
+        editorDiv.appendChild(document.createElement("div")).textContent = line;
     });
 
-    editorHTMLElement.setAttribute("contenteditable", "true");
-    editorHTMLElement.addEventListener("input", async inputEvt => {
-        try {
-            Array.from(document.querySelectorAll("#json ." + cssErrorClass))
-                .forEach(e => e.classList.remove(cssErrorClass));
-            const txt = Array.from(editorHTMLElement.children)
-                  .map(e => e.textContent)
-                  .join("\n");
-            console.log("jsoneditor: the txt is >", txt);
-            const jsonDoc = jsonparser(txt);
-            console.log("jsoneditor: the doc is >", JSON.stringify(jsonDoc, null, 2));
-            const updated = jsonDoc.valueOf();
-            console.log("jsoneditor: the updated is >", JSON.stringify(updated, null, 2));
-            if (check(updated)) {
-                const event = new CustomEvent("json-valid", {json: updated});
-                editorHTMLElement.dispatchEvent(event);
-            }
-        }
-        catch (e) {
-            try {
-                if (e instanceof SyntaxError) {
-                    const {message, line, column} = e;
-                    const lineElements = Array.from(editorHTMLElement.children);
-                    const txt = lineElements.reduce((a,c) => a + "\n" + c.textContent, "").slice(1);
-                    const lines = txt.split("\n");
-                    let count = 0;
-                    let i = 0;
-                    for (i = 0; i<lines.length; i++) {
-                        count = count + lines[i].length;
-                        console.log({i, lines, count, line, column});
-                        if (count > column) {
-                            break;
-                        }
-                    }
-                    lineElements[i].classList.add(cssErrorClass);
-                }
-                else {
-                    if (e.validationErrors !== undefined) {
-                        console.log("jsoneditor: validation errors!");
-                    }
-                }
-            }
-            catch (errErr) {
-                console.log("error in error handling", errErr);
-            }
-        }
+    editorDiv.setAttribute("contenteditable", "true");
+    editorDiv.addEventListener("input", async inputEvt => {
+        checkErrors(jsonDoc, editorDiv, editorErrorPanel, options);
     });
+
+    checkErrors(jsonDoc, editorDiv, editorErrorPanel, options);
 
     return editorHTMLElement;
 }

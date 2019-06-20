@@ -6,6 +6,12 @@ window.addEventListener("load", loadEvt => {
         "$schema": "http://json-schema.org/draft-07/schema#",
         "title": "JSON Editor Test",
         "type": "object",
+        "required": [
+            "title",
+            "description",
+            "list"
+        ],
+        "additionalProperties": false,
         "properties": {
             "title": {
                 "type": "string"
@@ -20,22 +26,20 @@ window.addEventListener("load", loadEvt => {
                 }
             }
         },
-        "additionalProperties": false
     };
-
-    const ajv = new Ajv(); // options can be passed, e.g. {allErrors: true}
-    const validate = ajv.compile(schema);
 
     const jsonDoc = {
-        title: "blah dee blah",
         description: "ho hum",
-        llst: [
+        list: [
             "one",
             "two"
-        ]
+        ],
+        title: "ha!"
     };
 
-    class SchemaValidationError extends Error {
+    const ajv = new Ajv()
+
+    class SchemaValidationError extends SyntaxError {
         constructor(message) {
             super(message);
         }
@@ -44,17 +48,43 @@ window.addEventListener("load", loadEvt => {
     jsoneditor(jsonDoc, document.querySelector("#json"), {
         cssErrorClass: "error",
 
-        check: function (object) {
-            console.log("check called with", object);
-            /*
-            const ajv = new Ajv(); // options can be passed, e.g. {allErrors: true}
+        check: function (jsonDoc) {
+            const obj = jsonDoc.valueOf();
+
             const validate = ajv.compile(schema);
-            const valid = validate(typedObject);
-            validate.errors = [];
-            const err = new SchemaValidationError("validation error");
-            err.validationErrors = errorList;
-            throw err;
-            */
+            const valid = validate(obj);
+            console.log("check says>", obj, valid);
+            if (!valid) {
+                console.log("check's first error", validate.errors);
+                const firstError = validate.errors[0];
+
+                const err = new SchemaValidationError("validation error");
+                if (firstError.keyword === "additionalProperties") {
+                    const keyPath = firstError.params.additionalProperty;
+                    const keys = keyPath.split(".");
+                    const lastKey = keys[0]; /// totally fake for now
+                    const keyPointer = jsonDoc.getKey(lastKey);
+                    err.line = keyPointer.line;
+                    err.column = keyPointer.column;
+                    err.validationMessage = firstError.message;
+                }
+                else if (firstError.keyword === "type") {
+                    const pathArr = firstError.dataPath.split(".");
+                    let doc = jsonDoc;
+                    for (let key of pathArr) {
+                        if (key === "") continue;
+                        doc = doc.get(key);
+                    }
+                    err.line = doc.line;
+                    err.column = doc.column;
+                    err.validationMessage = firstError.message;
+                }
+                validate.errors = [];
+
+                console.log("throwing schema validation error", err, err.line, err.column);
+                throw err;
+            }
+
         }
     });
 });
