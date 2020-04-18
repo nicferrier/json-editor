@@ -116,6 +116,7 @@ function jsoneditor(jsonDoc, editorHTMLElement, options = {}) {
 
     textArray.forEach(line => {
         editorDiv.appendChild(document.createElement("div")).textContent = line;
+        editorHTMLElement.dispatchEvent(new CustomEvent("input", {data: line}));
     });
 
     editorDiv.setAttribute("contenteditable", "true");
